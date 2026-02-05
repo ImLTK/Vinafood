@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VinaFood Insight</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+        }
+
+        /* Glassmorphism Classes */
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(245, 158, 11, 0.4);
+            box-shadow: 0 10px 40px -10px rgba(245, 158, 11, 0.2);
+        }
+
+        /* Scan Animation */
+        .scan-line {
+            width: 100%;
+            height: 2px;
+            background: #f59e0b;
+            box-shadow: 0 0 10px #f59e0b;
+            position: absolute;
+            top: 0;
+            left: 0;
+            animation: scan 2s linear infinite;
+            display: none;
+        }
+
+        @keyframes scan {
+            0% {
+                top: 0%;
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            90% {
+                opacity: 1;
+            }
+
+            100% {
+                top: 100%;
+                opacity: 0;
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+
+<body class="relative overflow-x-hidden">
+
+    <!-- Decorative Glows -->
+    <div class="fixed top-[-10%] left-[-10%] w-96 h-96 bg-amber-500/20 rounded-full blur-[128px] pointer-events-none">
+    </div>
+    <div
+        class="fixed bottom-[-10%] right-[-10%] w-96 h-96 bg-emerald-500/10 rounded-full blur-[128px] pointer-events-none">
+    </div>
+
+    <div class="container mx-auto px-4 py-8 max-w-6xl relative z-10">
+
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-12">
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                    <i class="fas fa-utensils text-white text-lg"></i>
+                </div>
+                <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-200 to-orange-400"
+                    data-i18n="title">
+                    VinaFood Insight
+                </h1>
+            </div>
+
+            <!-- Language Toggle -->
+            <div class="glass-panel rounded-full p-1 flex items-center gap-1">
+                <button id="lang-en" onclick="setLanguage('English')"
+                    class="px-4 py-1.5 rounded-full text-sm font-medium transition-all bg-amber-500 text-white shadow-lg">
+                    EN
+                </button>
+                <button id="lang-vn" onclick="setLanguage('Vietnamese')"
+                    class="px-4 py-1.5 rounded-full text-sm font-medium text-gray-400 hover:text-white transition-all">
+                    VN
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+
+            <!-- Left Column: Upload Section -->
+            <div class="flex flex-col gap-6">
+                <div class="glass-panel p-8 rounded-3xl text-center relative overflow-hidden group">
+                    <h2 class="text-3xl font-bold mb-2" data-i18n="identify-dish">Identify Your Dish</h2>
+                    <p class="text-slate-400 mb-8" data-i18n="upload-text">Upload a photo to uncover its story,
+                        nutrients, and more.</p>
+
+                    <div id="drop-area"
+                        class="border-2 border-dashed border-slate-600 rounded-2xl p-10 transition-all hover:border-amber-500 hover:bg-slate-800/50 cursor-pointer relative"
+                        ondragover="event.preventDefault()" ondrop="handleDrop(event)"
+                        onclick="document.getElementById('file-input').click()">
+
+                        <input type="file" id="file-input" class="hidden" accept="image/*"
+                            onchange="handleFileSelect(event)">
+
+                        <div id="upload-placeholder">
+                            <i
+                                class="fas fa-cloud-upload-alt text-5xl text-slate-500 mb-4 group-hover:text-amber-400 transition-colors"></i>
+                            <p class="text-lg font-medium text-slate-300" data-i18n="drag-drop">Click or drag image here
+                            </p>
+                            <p class="text-sm text-slate-500 mt-2" data-i18n="supports">Supports JPG, PNG</p>
+                        </div>
+
+                        <div id="preview-container" class="hidden relative rounded-xl overflow-hidden mt-2">
+                            <img id="image-preview" class="w-full h-64 object-cover rounded-xl shadow-2xl" src=""
+                                alt="Preview">
+                            <div class="scan-line" id="scan-line"></div>
+
+                            <!-- Remove Button -->
+                            <button onclick="resetUpload(event)"
+                                class="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/60 backdrop-blur text-white hover:bg-red-500 transition-colors flex items-center justify-center">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button id="analyze-btn" onclick="analyzeImage()"
+                        class="hidden w-full mt-6 py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold text-lg shadow-xl shadow-orange-500/20 hover:shadow-orange-500/40 hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span id="btn-text" data-i18n="analyze-btn">Analyze Dish</span>
+                        <span id="btn-loading" class="hidden" data-i18n="analyzing"><i
+                                class="fas fa-circle-notch fa-spin mr-2"></i>
+                            Thinking...</span>
+                    </button>
+                </div>
+
+                <!-- Global Counter -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="glass-panel p-6 rounded-2xl flex items-center gap-4">
+                        <div
+                            class="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                            <i class="fas fa-globe-asia text-emerald-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-slate-400 text-xs uppercase tracking-wide" data-i18n="dishes-scanned">Dishes
+                                Scanned</p>
+                            <p id="global-counter" class="text-2xl font-bold text-white">{{ initial_count }}</p>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-2xl flex items-center gap-4">
+                        <div
+                            class="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
+                            <i class="fas fa-eye text-purple-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-slate-400 text-xs uppercase tracking-wide" data-i18n="website-visits">Website
+                                Visits</p>
+                            <p id="visit-counter" class="text-2xl font-bold text-white">{{ visit_count }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Results Section (Initially empty state or hidden) -->
+            <div id="results-section" class="hidden h-full">
+                <!-- Header Name & Health badge -->
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <h2 id="dish-name"
+                            class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 mb-1">
+                            --
+                        </h2>
+                        <div class="flex gap-2 mt-2">
+                            <span id="health-badge"
+                                class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                                data-i18n="health-rating">
+                                Health Rating: <span id="health-rating">--</span>/10
+                            </span>
+                        </div>
+                    </div>
+                    <!-- Actions -->
+                    <div class="flex gap-2">
+                        <a id="maps-link" href="#" target="_blank"
+                            class="w-10 h-10 rounded-full glass-panel flex items-center justify-center text-slate-300 hover:text-amber-400 hover:bg-white/5 transition-all text-lg"
+                            title="Find near me" data-i18n="find-near-me">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Bento Grid Layout for Details -->
+                <div class="grid grid-cols-2 gap-4">
+
+                    <!-- Stats Card -->
+                    <div class="glass-card p-5 rounded-2xl col-span-2">
+                        <h3 class="text-slate-400 text-xs uppercase tracking-wider mb-4 font-bold"
+                            data-i18n="nutritional-info">Nutritional Info</h3>
+                        <div class="flex justify-around text-center">
+                            <div>
+                                <p class="text-2xl font-bold text-orange-400" id="calories">--</p>
+                                <p class="text-xs text-slate-500" data-i18n="calories">Calories</p>
+                            </div>
+                            <div class="w-px bg-slate-700"></div>
+                            <div>
+                                <p class="text-sm font-semibold text-slate-300" id="macros">--</p>
+                                <p class="text-xs text-slate-500" data-i18n="macros">Macronutrients</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- History Card -->
+                    <div class="glass-card p-5 rounded-2xl col-span-2 bg-gradient-to-br from-white/5 to-transparent">
+                        <h3 class="text-slate-400 text-xs uppercase tracking-wider mb-2 font-bold"
+                            data-i18n="cultural-story"><i class="fas fa-history mr-2"></i>Cultural Story</h3>
+                        <p id="history-text" class="text-slate-300 text-sm leading-relaxed">--</p>
+                    </div>
+
+                    <!-- Health Tip Card -->
+                    <div class="glass-card p-5 rounded-2xl col-span-2 md:col-span-1 border-l-4 border-l-emerald-500">
+                        <h3 class="text-emerald-400 text-xs uppercase tracking-wider mb-2 font-bold"
+                            data-i18n="healthier-twist">Healthier Twist
+                        </h3>
+                        <p id="health-advice" class="text-slate-300 text-sm">--</p>
+                    </div>
+
+                    <!-- Recipe Toggle Card -->
+                    <div class="glass-card p-0 rounded-2xl col-span-2 md:col-span-1 overflow-hidden relative cursor-pointer group"
+                        onclick="toggleRecipe()">
+                        <div class="absolute inset-0 bg-amber-500/10 group-hover:bg-amber-500/20 transition-all"></div>
+                        <div class="p-5 relative z-10 h-full flex flex-col justify-center items-center text-center">
+                            <i
+                                class="fas fa-fire-burner text-amber-400 text-2xl mb-2 group-hover:scale-110 transition-transform"></i>
+                            <h3 class="font-bold text-white">View Recipe</h3>
+                            <p class="text-xs text-slate-400 mt-1">Click to reveal steps</p>
+                        </div>
+                    </div>
+
+                    <!-- Hidden Recipe Modal/Expandable -->
+                    <div id="recipe-container"
+                        class="glass-card p-5 rounded-2xl col-span-2 hidden animate-fade-in-down">
+                        <h3 class="text-amber-400 text-xs uppercase tracking-wider mb-3 font-bold">Preparation Steps
+                        </h3>
+                        <ul id="recipe-list" class="space-y-2 text-sm text-slate-300 list-disc list-inside">
+                            <!-- populated by JS -->
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Javascript Logic -->
+    <script>
+        let currentLanguage = 'English';
+        let selectedFile = null;
+
+        const translations = {
+            'English': {
+                'title': 'VinaFood Insight',
+                'identify-dish': 'Identify Your Dish',
+                'upload-text': 'Upload a photo to uncover its story, nutrients, and more.',
+                'drag-drop': 'Click or drag image here',
+                'supports': 'Supports JPG, PNG',
+                'analyze-btn': 'Analyze Dish',
+                'analyzing': 'Thinking...',
+                'dishes-scanned': 'Dishes Scanned',
+                'website-visits': 'Website Visits',
+                'health-rating': 'Health Rating:',
+                'find-near-me': 'Find near me',
+                'nutritional-info': 'Nutritional Info',
+                'calories': 'Calories',
+                'macros': 'Macronutrients',
+                'cultural-story': 'Cultural Story',
+                'healthier-twist': 'Healthier Twist',
+                'view-recipe': 'View Recipe',
+                'click-reveal': 'Click to reveal steps',
+                'prep-steps': 'Preparation Steps',
+                'no-recipe': 'No detailed recipe available.'
+            },
+            'Vietnamese': {
+                'title': 'VinaFood Insight',
+                'identify-dish': 'Nhận diện món ăn',
+                'upload-text': 'Tải ảnh lên để khám phá câu chuyện, dinh dưỡng và hơn thế nữa.',
+                'drag-drop': 'Nhấn hoặc kéo ảnh vào đây',
+                'supports': 'Hỗ trợ JPG, PNG',
+                'analyze-btn': 'Phân tích món ăn',
+                'analyzing': 'Đang suy nghĩ...',
+                'dishes-scanned': 'Món đã quét',
+                'website-visits': 'Lượt truy cập',
+                'health-rating': 'Chấm điểm sức khỏe:',
+                'find-near-me': 'Tìm quanh đây',
+                'nutritional-info': 'Thông tin dinh dưỡng',
+                'calories': 'Calo',
+                'macros': 'Các chất dinh dưỡng',
+                'cultural-story': 'Câu chuyện văn hóa',
+                'healthier-twist': 'Góc sức khỏe',
+                'view-recipe': 'Xem công thức',
+                'click-reveal': 'Nhấn để xem các bước',
+                'prep-steps': 'Các bước chuẩn bị',
+                'no-recipe': 'Không có công thức chi tiết.'
+            }
+        };
+
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const btnEn = document.getElementById('lang-en');
+            const btnVn = document.getElementById('lang-vn');
+
+            // Update Toggle UI
+            if (lang === 'English') {
+                btnEn.classList.add('bg-amber-500', 'text-white', 'shadow-lg');
+                btnEn.classList.remove('text-gray-400');
+                btnVn.classList.remove('bg-amber-500', 'text-white', 'shadow-lg');
+                btnVn.classList.add('text-gray-400');
+            } else {
+                btnVn.classList.add('bg-amber-500', 'text-white', 'shadow-lg');
+                btnVn.classList.remove('text-gray-400');
+                btnEn.classList.remove('bg-amber-500', 'text-white', 'shadow-lg');
+                btnEn.classList.add('text-gray-400');
+            }
+
+            // Update Static Text
+            const t = translations[lang];
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (t[key]) {
+                    if (el.tagName === 'INPUT' && el.type === 'placeholder') {
+                        el.placeholder = t[key];
+                    } else {
+                        // Check if element has child nodes that shouldn't be overwritten (like icons)
+                        if (key === 'health-rating') {
+                            // Preserve the span
+                            const ratingSpan = el.querySelector('#health-rating');
+                            const ratingVal = ratingSpan ? ratingSpan.textContent : '--';
+                            el.innerHTML = `${t[key]} <span id="health-rating">${ratingVal}</span>/10`;
+                        } else if (key === 'cultural-story') {
+                            el.innerHTML = `<i class="fas fa-history mr-2"></i>${t[key]}`;
+                        } else if (key === 'find-near-me') {
+                            el.title = t[key];
+                        } else if (key === 'analyzing') {
+                            // This is usually hidden, but we update the text
+                            el.innerHTML = `<i class="fas fa-circle-notch fa-spin mr-2"></i> ${t[key]}`;
+                        } else {
+                            el.textContent = t[key];
+                        }
+                    }
+                }
+            });
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) handleFile(file);
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            const file = event.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) handleFile(file);
+        }
+
+        function handleFile(file) {
+            selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('image-preview').src = e.target.result;
+                document.getElementById('upload-placeholder').classList.add('hidden');
+                document.getElementById('preview-container').classList.remove('hidden');
+                document.getElementById('analyze-btn').classList.remove('hidden');
+                // Scroll slightly
+                document.getElementById('drop-area').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function resetUpload(event) {
+            if (event) event.stopPropagation();
+            selectedFile = null;
+            document.getElementById('file-input').value = '';
+            document.getElementById('upload-placeholder').classList.remove('hidden');
+            document.getElementById('preview-container').classList.add('hidden');
+            document.getElementById('analyze-btn').classList.add('hidden');
+            document.getElementById('results-section').classList.add('hidden');
+            document.getElementById('scan-line').style.display = 'none';
+        }
+
+        async function analyzeImage() {
+            if (!selectedFile) return;
+
+            // UI Loading State
+            const btn = document.getElementById('analyze-btn');
+            const btnText = document.getElementById('btn-text');
+            const btnLoad = document.getElementById('btn-loading');
+            const scanLine = document.getElementById('scan-line');
+
+            btn.disabled = true;
+            btnText.classList.add('hidden');
+            btnLoad.classList.remove('hidden');
+            scanLine.style.display = 'block';
+
+            const formData = new FormData();
+            formData.append('image', selectedFile);
+            formData.append('language', currentLanguage);
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResults(data);
+                } else {
+                    alert('Error: ' + (data.error || 'Something went wrong'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Connection failed. Please try again.');
+            } finally {
+                // UI Reset State
+                btn.disabled = false;
+                btnText.classList.remove('hidden');
+                btnLoad.classList.add('hidden');
+                scanLine.style.display = 'none';
+            }
+        }
+
+        function displayResults(data) {
+            const results = document.getElementById('results-section');
+            results.classList.remove('hidden');
+            results.classList.add('animate-fadeIn');
+
+            // Populate Data
+            document.getElementById('dish-name').textContent = data.dish_name;
+            document.getElementById('calories').textContent = data.calories;
+            document.getElementById('macros').textContent = data.macronutrients;
+            document.getElementById('health-rating').textContent = data.health_rating;
+
+            // Dynamic Health Badge Styling
+            const healthBadge = document.getElementById('health-badge');
+            // Remove existing distinct color classes
+            healthBadge.className = 'px-3 py-1 rounded-full text-xs font-bold border transition-colors';
+
+            const rating = parseFloat(data.health_rating);
+            if (rating < 3) {
+                // Red
+                healthBadge.classList.add('bg-red-500/20', 'text-red-300', 'border-red-500/30');
+            } else if (rating <= 5) {
+                // Yellow
+                healthBadge.classList.add('bg-yellow-500/20', 'text-yellow-300', 'border-yellow-500/30');
+            } else {
+                // Green (Emerald)
+                healthBadge.classList.add('bg-emerald-500/20', 'text-emerald-300', 'border-emerald-500/30');
+            }
+
+            document.getElementById('health-advice').textContent = data.health_advice;
+            document.getElementById('history-text').textContent = data.history;
+            document.getElementById('global-counter').textContent = data.global_count;
+
+            // Maps Link
+            const query = encodeURIComponent(data.dish_name + " near me");
+            document.getElementById('maps-link').href = `https://www.google.com/maps/search/${query}`;
+
+            // Recipe List
+            const recipeList = document.getElementById('recipe-list');
+            recipeList.innerHTML = '';
+            if (data.recipe_steps && Array.isArray(data.recipe_steps)) {
+                data.recipe_steps.forEach(step => {
+                    const li = document.createElement('li');
+                    li.textContent = step;
+                    recipeList.appendChild(li);
+                });
+            } else {
+                recipeList.innerHTML = '<li>No detailed recipe available.</li>';
+            }
+
+            // Re-hide recipe on fresh analysis
+            document.getElementById('recipe-container').classList.add('hidden');
+
+            // Scroll to results
+            results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function toggleRecipe() {
+            const container = document.getElementById('recipe-container');
+            container.classList.toggle('hidden');
+        }
+    </script>
+</body>
+
+</html>
