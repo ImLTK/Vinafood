@@ -106,6 +106,7 @@ def analyze_dish():
         }}
         """
 
+        print(f"Analyzing image with model: gemini-flash-latest")
         # Call Gemini API
         response = client.models.generate_content(
             model="gemini-flash-latest",
