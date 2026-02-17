@@ -4,7 +4,8 @@ from google import genai
 from google.genai import types
 from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
-from pathlib import Path
+from pymongo import MongoClient
+from pymongo.errors import ConnectionFailure
 
 # Load environment variables
 load_dotenv()
@@ -14,37 +15,51 @@ client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 app = Flask(__name__)
 
-# Constants
-STATS_FILE = 'stats.json'
+# MongoDB Configuration
+MONGO_URI = os.getenv("MONGO_URI")
 
-def load_stats():
-    """Safely loads stats from stats.json"""
-    if os.path.exists(STATS_FILE):
-        try:
-            with open(STATS_FILE, 'r') as f:
-                return json.load(f)
-        except (json.JSONDecodeError, ValueError):
-            pass
-    return {}
-
-def save_stats(data):
-    """Safely saves stats to stats.json"""
-    with open(STATS_FILE, 'w') as f:
-        json.dump(data, f)
+def get_db_collection():
+    """Connects to MongoDB and returns the stats collection"""
+    if not MONGO_URI:
+        return None
+    try:
+        client = MongoClient(MONGO_URI)
+        db = client.get_default_database()
+        return db.stats
+    except (ConnectionFailure, Exception) as e:
+        print(f"MongoDB connection error: {e}")
+        return None
 
 def update_counter(key):
-    """Generic function to update any counter in stats.json"""
-    data = load_stats()
-    current_count = data.get(key, 0)
-    current_count += 1
-    data[key] = current_count
-    save_stats(data)
-    return current_count
+    """Updates a counter in MongoDB"""
+    collection = get_db_collection()
+    if collection is None:
+        return 0
+    
+    try:
+        result = collection.find_one_and_update(
+            {"_id": "global_stats"},
+            {"$inc": {key: 1}},
+            upsert=True,
+            return_document=True
+        )
+        return result.get(key, 0)
+    except Exception as e:
+        print(f"Error updating counter {key}: {e}")
+        return 0
 
 def get_counter_value(key):
-    """Generic function to get any counter value"""
-    data = load_stats()
-    return data.get(key, 0)
+    """Gets a counter value from MongoDB"""
+    collection = get_db_collection()
+    if collection is None:
+        return 0
+        
+    try:
+        doc = collection.find_one({"_id": "global_stats"})
+        return doc.get(key, 0) if doc else 0
+    except Exception as e:
+        print(f"Error getting counter {key}: {e}")
+        return 0
 
 # Legacy wrappers for backward compatibility if needed, using the new generic system
 def update_global_counter():
@@ -93,7 +108,7 @@ def analyze_dish():
 
         # Call Gemini API
         response = client.models.generate_content(
-            model="gemini-flash-latest",
+            model="gemini-2.0-flash",
             contents=[
                 types.Content(
                     role="user",
@@ -135,9 +150,4 @@ def get_counter():
     })
 
 if __name__ == '__main__':
-    # Create stats file if not exists
-    if not os.path.exists(STATS_FILE):
-        with open(STATS_FILE, 'w') as f:
-            json.dump({'total_dishes_scanned': 0}, f)
-            
     app.run()
