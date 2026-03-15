@@ -1,5 +1,7 @@
 import os
 import json
+import io
+from PIL import Image
 from google import genai
 from google.genai import types
 from flask import Flask, render_template, request, jsonify
@@ -89,8 +91,23 @@ def analyze_dish():
 
     try:
         # Read image bytes
-        image_data = image_file.read()
+        original_data = image_file.read()
         
+        # Resize image to save Gemini quota
+        try:
+            img = Image.open(io.BytesIO(original_data))
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
+            img.thumbnail((512, 512))
+            output = io.BytesIO()
+            img.save(output, format="JPEG", quality=85)
+            image_data = output.getvalue()
+            mime_type = "image/jpeg"
+        except Exception as e:
+            print(f"Error resizing image: {e}")
+            image_data = original_data
+            mime_type = image_file.content_type
+            
         # Prepare the prompt
         prompt = f"""
         Analyze this image of a Vietnamese dish and provide the following information in {language}.
@@ -114,7 +131,7 @@ def analyze_dish():
                 types.Content(
                     role="user",
                     parts=[
-                        types.Part.from_bytes(data=image_data, mime_type=image_file.content_type),
+                        types.Part.from_bytes(data=image_data, mime_type=mime_type),
                         types.Part.from_text(text=prompt)
                     ]
                 )
