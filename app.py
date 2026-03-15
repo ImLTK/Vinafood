@@ -123,10 +123,10 @@ def analyze_dish():
         }}
         """
 
-        print(f"Analyzing image with model: gemini-2.0-flash-lite-preview-02-05")
+        print(f"Analyzing image with model: gemini-3.1-flash-lite-preview")
         # Call Gemini API
         response = client.models.generate_content(
-            model="gemini-2.0-flash-lite-preview-02-05",
+            model="gemini-3.1-flash-lite-preview",
             contents=[
                 types.Content(
                     role="user",
