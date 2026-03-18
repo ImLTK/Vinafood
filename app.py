@@ -1,4 +1,5 @@
 import os
+import random
 import json
 import io
 from PIL import Image
@@ -12,8 +13,19 @@ from pymongo.errors import ConnectionFailure
 # Load environment variables
 load_dotenv()
 
-# Configure Gemini Client
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+# Gemini API keys (rotated randomly per request)
+GEMINI_API_KEYS = [
+    os.getenv("GEMINI_API_KEY1"),
+    os.getenv("GEMINI_API_KEY2"),
+    os.getenv("GEMINI_API_KEY3"),
+    os.getenv("GEMINI_API_KEY4"),
+]
+
+def get_gemini_client():
+    """Returns a Gemini client using a randomly selected API key."""
+    key = random.choice([k for k in GEMINI_API_KEYS if k])
+    print(f"Using Gemini API key ending in: ...{key[-6:]}")
+    return genai.Client(api_key=key)
 
 app = Flask(__name__)
 
@@ -125,7 +137,7 @@ def analyze_dish():
 
         print(f"Analyzing image with model: gemini-3.1-flash-lite-preview")
         # Call Gemini API
-        response = client.models.generate_content(
+        response = get_gemini_client().models.generate_content(
             model="gemini-3.1-flash-lite-preview",
             contents=[
                 types.Content(
