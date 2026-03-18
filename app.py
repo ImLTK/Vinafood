@@ -13,19 +13,21 @@ from pymongo.errors import ConnectionFailure
 # Load environment variables
 load_dotenv()
 
-# Gemini API keys (rotated randomly per request)
-GEMINI_API_KEYS = [
+# Pre-create one persistent Gemini client per API key at startup.
+# Creating a new client per request causes "client has been closed" errors
+# because the underlying HTTP session gets torn down after the first use.
+_raw_keys = [
     os.getenv("GEMINI_API_KEY1"),
     os.getenv("GEMINI_API_KEY2"),
     os.getenv("GEMINI_API_KEY3"),
     os.getenv("GEMINI_API_KEY4"),
 ]
+GEMINI_CLIENTS = [genai.Client(api_key=k) for k in _raw_keys if k]
 
 def get_gemini_client():
-    """Returns a Gemini client using a randomly selected API key."""
-    key = random.choice([k for k in GEMINI_API_KEYS if k])
-    print(f"Using Gemini API key ending in: ...{key[-6:]}")
-    return genai.Client(api_key=key)
+    """Returns a random pre-created Gemini client."""
+    client = random.choice(GEMINI_CLIENTS)
+    return client
 
 app = Flask(__name__)
 
