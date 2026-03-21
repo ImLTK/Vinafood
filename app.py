@@ -24,9 +24,21 @@ _raw_keys = [
 ]
 GEMINI_CLIENTS = [genai.Client(api_key=k) for k in _raw_keys if k]
 
+_last_client = None
+
 def get_gemini_client():
-    """Returns a random pre-created Gemini client."""
+    """Returns a random pre-created Gemini client, avoiding the last used one."""
+    global _last_client
+    if not GEMINI_CLIENTS:
+        return None
+    if len(GEMINI_CLIENTS) == 1:
+        return GEMINI_CLIENTS[0]
+        
     client = random.choice(GEMINI_CLIENTS)
+    while client == _last_client:
+        client = random.choice(GEMINI_CLIENTS)
+        
+    _last_client = client
     return client
 
 app = Flask(__name__)
