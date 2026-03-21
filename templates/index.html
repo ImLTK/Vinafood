@@ -454,6 +454,9 @@
             try {
                 const response = await fetch('/analyze', {
                     method: 'POST',
+                    headers: {
+                        'X-API-Key': 'vinafood-client-key-778899'
+                    },
                     body: formData
                 });
 

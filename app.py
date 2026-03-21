@@ -104,8 +104,15 @@ def index():
                          initial_count=get_global_counter(),
                          visit_count=visit_count)
 
+API_SECRET = os.getenv("API_SECRET", "vinafood-client-key-778899")
+
 @app.route('/analyze', methods=['POST'])
 def analyze_dish():
+    # Verify the frontend secret token to block generic bots
+    token = request.headers.get('X-API-Key') or request.form.get('api_key')
+    if token != API_SECRET:
+        return jsonify({'error': 'Unauthorized access. Invalid API key.'}), 401
+
     if 'image' not in request.files:
         return jsonify({'error': 'No image uploaded'}), 400
     
